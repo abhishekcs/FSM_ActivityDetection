@@ -1,0 +1,25 @@
+4
+3
+253	277	Head-office
+424	444	Entry-cam01
+305	445	Entry-cam02
+7
+420	530	Entry-cam11
+295	530	Entry-cam12
+240	460	Suban-office
+290	340	Exit-staircase
+353	316	Faculty-door
+404	364	Verification-lab
+455	462	DB-lab
+5
+444	395	Vision-lab
+359	426	Entry-cam21
+381	225	Exit-cam21
+297	226	Exit-cam22
+235	214	Exit-staircasecam2
+5
+455	412	Entry-cam31
+303	415	Entry-cam32
+369	236	Exit-cam31
+283	233	Exit-cam32
+179	305	ProfX-office

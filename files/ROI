@@ -1,0 +1,19 @@
+4
+2
+248	272	Head-office
+345	423	Cam0-Entry
+4
+334	331	Faculty-door
+396	493	DB-Lab
+276	539	Cam1-Entry
+394	372	Verification-Lab
+4
+405	369	Vision-Lab
+270	449	Cam2-Exit
+325	234	Cam2-Entry
+131	330	Exit-Staircase
+4
+439	262	Network-Lab
+332	229	Cam3-Entry
+455	404	Cam3-Exit....1
+300	403	Cam3-Exit....2

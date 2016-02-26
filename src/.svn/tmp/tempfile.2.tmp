@@ -1,0 +1,157 @@
+#include "../include/state.h"
+#include "../include/activity.h"
+#include "../include/person.h"
+#include "../include/dlist.h"
+#include "../include/detection.h"
+#include "../include/recognition.h"
+#include "../include/searchfunctions.h"
+#include "../include/init.h"
+#include "../include/hierarchy.h"
+#include "../include/include.h"
+#include "../include/setROI.h"
+#include "../include/setHomography.h"
+
+
+bool cameraFeed = false;
+CvHaarClassifierCascade *cascade;
+CvMemStorage *storage;
+CvFont font;
+int frameCount[NO_OF_CAMERAS];
+
+int main(int argc, char** argv)
+{
+	if (argc == 1)
+	{
+		cout << "Usage: " << argv[0] << " [mode] [arguments]\n";
+		cout << "possible modes are: run configure query\n"; 
+		exit(1);
+	}
+	else if (argc >= 2)
+	{
+		if (strcmp(argv[1], "run") == 0)
+			goto run;
+		else if (strcmp(argv[1], "configure") == 0)
+		{
+			if (argc == 2)
+			{
+				cout << "Usage: " << argv[0] << " configure [arguments]\n";
+				cout << "possible arguments are: ROI Homography\n"; 
+				exit(1);
+			}
+			else if (strcmp(argv[2], "ROI") == 0)
+			{
+				setROI(argc-3, argv+3);
+				exit(1);
+			}
+			else if (strcmp(argv[2], "Homography") == 0)
+			{
+				setHomography(argc-3, argv+3);
+				exit(1);
+			}
+			else
+			{
+				cout << "Usage: " << argv[0] << " configure [arguments]\n";
+				cout << "possible arguments are: ROI Homography\n"; 
+				exit(1);
+			}
+		}
+		else if (strcmp(argv[1], "query") == 0)
+		{
+			cout << "Sorry, feature not available\n";
+			exit(1);
+		}
+		else
+		{
+			cout << "Usage: " << argv[0] << " [mode] [arguments]\n";
+			cout << "possible modes are: run configure query\n"; 
+			exit(1);
+		}		
+	}
+	run:
+	CvCapture* capture[NO_OF_CAMERAS];
+	if (argc == 2)
+	{
+		cout << "Taking video feed from cameras.\n";
+		for (int i = 0; i < NO_OF_CAMERAS; i++)
+			capture[i] = cvCaptureFromCAM(i);
+		cameraFeed = true;
+	}
+	else if (argc < NO_OF_CAMERAS+2)
+	{
+		cout << "Usage: " << argv[0] << " " << "run " << NO_OF_CAMERAS << " video files separated by spaces.\n";
+		exit(1);
+	} 
+	else
+	{
+		for (int i = 0; i < NO_OF_CAMERAS; i++)
+			capture[i] = cvCaptureFromFile(argv[i+2]);
+	}
+	for (int i = 0; i < NO_OF_CAMERAS; i++)
+		ASSERT(capture[i]);
+	char haarcascade[100];
+	strcpy(haarcascade, PROJECT_PATH);
+	strcat(haarcascade, "haarcascades/haarcascade_fullbody.xml");
+	cascade = (CvHaarClassifierCascade*)cvLoad(haarcascade);
+	ASSERT(cascade);
+	storage = cvCreateMemStorage(0);
+	ASSERT(storage);
+	cvInitFont(&font, CV_FONT_HERSHEY_SIMPLEX|CV_FONT_ITALIC, 2.0, 2.0, 0, 5);
+	PRINT("INITIALISING");
+	initHomography();
+	PRINT("POST-HOMOGRAPHY");
+	initROI();
+	PRINT("POST-ROI");
+	initActivity();
+	PRINT("POST-ACTIVITY");
+	for (int i = 0; i < NO_OF_CAMERAS; i++)
+	{
+		if (cameraFeed)
+		{
+			char cameraName[10];
+			sprintf(cameraName, "%s %d", "camera", i);
+			PRINT(cameraName);
+			cvNamedWindow(cameraName);
+		}
+		else
+			cvNamedWindow(argv[i+2]);
+	}
+	for (int i = 0; i < NO_OF_CAMERAS; i++)
+		frameCount[i] = 0;
+	IplImage *frame;
+	while (1)
+	{
+		PRINT("LOOP");
+		for (int i = 0; i < NO_OF_CAMERAS; i++)
+		{
+			frame = cvQueryFrame(capture[i]);
+			ASSERT(frame);
+			frame->origin = 0;
+			if (cameraFeed)
+			{
+				char cameraName[10];
+				sprintf(cameraName, "%s %d", "camera", i);
+				detectBodies(frame, cameraName, i);
+			}
+			else
+				detectBodies(frame, argv[i+2], i);
+			cvWaitKey(2);
+		}
+		PRINT("LOOP END");
+		cvWaitKey(0);
+	}
+	for (int i = 0; i < NO_OF_CAMERAS; i++)
+	{
+		cvReleaseCapture(&capture[i]);
+		if (cameraFeed)
+		{
+			char cameraName[10];
+			sprintf(cameraName, "%s %d", "camera", i);
+			cvDestroyWindow(cameraName);
+		}
+		else
+			cvDestroyWindow(argv[i+2]);
+	}
+	cvReleaseHaarClassifierCascade(&cascade);
+	cvReleaseMemStorage(&storage);
+	return 1;	
+}
